@@ -157,3 +157,63 @@ def setup_knowledge_base_tool(pdf_path: str):
             description="知识库问答工具初始化失败。",
             args_schema=KnowledgeInput
         )
+
+
+# ----------------------------
+# Agent 构建
+# ----------------------------
+def create_agent():
+    llm = ChatDeepSeek(
+        model="deepseek-chat",
+        api_key=os.getenv("DEEPSEEK_API_KEY"),
+        temperature=0.3
+    )
+
+    # ✅ 这里要改成你真实的文件名
+    pdf_path = "./docs/the_history_of_ship.pdf"
+    knowledge_tool = setup_knowledge_base_tool(pdf_path)
+
+    tools = [calculator_tool, weather_tool, knowledge_tool]
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True
+    )
+
+    agent = initialize_agent(
+        tools=tools,
+        llm=llm,
+        memory=memory,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
+        handle_parsing_errors=True
+    )
+    return agent
+
+
+# ----------------------------
+# CLI 主程序
+# ----------------------------
+if __name__ == "__main__":
+    print("🤖 智能 Agent 工具（DeepSeek + Calculator + Weather + PDF 知识库）")
+    print("输入 'exit' 退出程序")
+
+    try:
+        agent = create_agent()
+        print("✅ Agent 初始化成功！")
+    except Exception as e:
+        print(f"❌ 初始化失败: {e}")
+        exit(1)
+
+    while True:
+        query = input("\n请输入问题：")
+        if query.strip().lower() == "exit":
+            print("👋 再见！")
+            break
+
+        try:
+            result = agent.invoke({"input": query})
+            print(f"\n🧠 回复结果:\n{result['output']}")
+        except Exception as e:
+            print(f"\n❌ 错误：{e}")
+            args_schema=KnowledgeInput
+        )
